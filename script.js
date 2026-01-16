@@ -155,13 +155,13 @@ function closeHelp() { document.getElementById('help-modal').style.display = 'no
 
 function flipARCard(element) { element.querySelector('.ar-flip-inner').classList.toggle('is-flipped'); }
 
-// LÓGICA DE ICONOS DINÁMICOS
+// LÓGICA DE ICONOS DINÁMICOS SOLICITADA
 function getWeatherEmoji(code, isDay) {
     if (code >= 200 && code < 300) return "⛈️"; // Tormenta
     if (code >= 300 && code < 600) return "🌧️"; // Lluvia
     if (code >= 600 && code < 700) return "❄️"; // Nieve
     if (code === 800) return isDay ? "☀️" : "🌙"; // Despejado
-    if (code === 801 || code === 802) return isDay ? "⛅" : "☁️"; // Poco nublado
+    if (code === 801 || code === 802) return isDay ? "⛅" : "☁️"; // Nublado parcial
     if (code >= 803) return "☁️"; // Muy nuboso
     return "🌡️";
 }
@@ -186,7 +186,7 @@ async function loadWeather() {
             document.getElementById('temp').innerText = `${Math.round(data.main.temp)}°`;
             document.getElementById('weather-desc').innerText = data.weather[0].description.toUpperCase();
             
-            // Icono principal centrado
+            // Icono principal
             document.getElementById('weather-icon-main').innerText = getWeatherEmoji(data.weather[0].id, isDay);
 
             document.getElementById('visibility').innerText = `${(data.visibility / 1000).toFixed(1)} km`;
@@ -195,7 +195,7 @@ async function loadWeather() {
             document.getElementById('humidity').innerText = `${data.main.humidity}%`;
             document.getElementById('wind').innerText = `${data.wind.speed} km/h`;
             
-            // CORRECCIÓN: Mal Aire (Eliminada la duplicación de "Aire")
+            // CORRECCIÓN: Mal Aire (Sin duplicado)
             const aqiLevels = ["Buena", "Aceptable", "Moderada", "Mal Aire", "Muy Mala"];
             document.getElementById('air-quality').innerText = aqiLevels[dataAir.list[0].main.aqi - 1];
             updateGauge('gauge-air', dataAir.list[0].main.aqi, 5);
@@ -225,9 +225,27 @@ window.onload = () => {
     });
     newsSwiper = new Swiper(".newsSwiper", { slidesPerView: 1.2, spaceBetween: 15, loop: true, autoplay: { delay: 10000 } });
 
+    // ESCENAS AR CORREGIDAS PARA ENVIAR ID POR URL
     const arWrapper = document.getElementById('ar-cards-wrapper');
     escenasARData.forEach(esc => {
-        arWrapper.innerHTML += `<div class="swiper-slide"><div class="ar-flip-card" onclick="flipARCard(this)"><div class="ar-flip-inner"><div class="ar-card-front"><img src="${esc.img}" alt="${esc.nombre}"><h3>${esc.nombre}</h3></div><div class="ar-card-back"><h3>Detalles</h3><p>${esc.info}</p><button class="action-btn" onclick="event.stopPropagation(); location.href='ar_view.html'" style="height:45px; font-size:10px;">VER ESCENA AR</button></div></div></div></div>`;
+        arWrapper.innerHTML += `
+            <div class="swiper-slide">
+                <div class="ar-flip-card" onclick="flipARCard(this)">
+                    <div class="ar-flip-inner">
+                        <div class="ar-card-front">
+                            <img src="${esc.img}" alt="${esc.nombre}">
+                            <h3>${esc.nombre}</h3>
+                        </div>
+                        <div class="ar-card-back">
+                            <h3>Detalles</h3>
+                            <p>${esc.info}</p>
+                            <button class="action-btn" onclick="event.stopPropagation(); location.href='ar_view.html?id=${esc.id}'" style="height:45px; font-size:10px;">
+                                VER ESCENA AR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
     });
 
     arSwiper = new Swiper(".tinderSwiper", {
