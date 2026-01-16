@@ -10,25 +10,28 @@
         <style>
             .close-ar { 
                 position: fixed; top: 20px; left: 20px; z-index: 1000; 
-                padding: 12px 20px; background: rgba(17, 33, 45, 0.8); 
+                padding: 12px 20px; background: rgba(17, 33, 45, 0.9); 
                 color: white; border: 1px solid #253745; border-radius: 50px; 
                 text-decoration: none; font-size: 14px; font-weight: bold;
                 backdrop-filter: blur(10px);
             }
-            .ar-info {
+            .ar-ui-overlay {
                 position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-                background: rgba(0,0,0,0.7); color: white; padding: 10px 20px;
-                border-radius: 20px; font-family: sans-serif; font-size: 12px;
+                background: rgba(0,0,0,0.75); color: white; padding: 12px 25px;
+                border-radius: 30px; font-family: 'Roboto', sans-serif; font-size: 13px;
                 text-align: center; pointer-events: none; z-index: 1000;
+                border: 1px solid rgba(255,255,255,0.2);
+                min-width: 250px;
             }
         </style>
     </head>
     <body style="margin: 0; overflow: hidden;">
         <a href="index.html" class="close-ar">✕ Salir de AR</a>
-        <div id="ui-info" class="ar-info">Apunta al marcador de la escena</div>
+        <div id="ui-text" class="ar-ui-overlay">Cargando visor...</div>
 
         <a-scene vr-mode-ui="enabled: false;" loading-screen="enabled: false;" renderer="logarithmicDepthBuffer: true;" arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;" id="scene" embedded gesture-detector>
-            <a-assets id="assets-container">
+            
+            <a-assets id="assets-list">
                 <a-asset-item id="asset-1" src="assets/asset1.glb"></a-asset-item>
                 <a-asset-item id="asset-2" src="assets/asset2.glb"></a-asset-item>
                 <a-asset-item id="asset-3" src="assets/asset3.glb"></a-asset-item>
@@ -36,42 +39,55 @@
                 <a-asset-item id="asset-5" src="assets/asset5.glb"></a-asset-item>
             </a-assets>
 
-            <a-entity id="marker-wrapper"></a-entity>
+            <a-entity id="main-marker-container"></a-entity>
 
             <a-entity camera></a-entity>
         </a-scene>
 
         <script>
-            // Lógica para detectar qué escena mostrar
-            const urlParams = new URLSearchParams(window.location.search);
-            const sceneId = urlParams.get('id') || '1';
-            const wrapper = document.getElementById('marker-wrapper');
-            const uiInfo = document.getElementById('ui-info');
+            // 1. Obtener el ID de la escena desde la URL
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id') || '1'; // Si no hay ID, por defecto es 1
+            
+            const container = document.getElementById('main-marker-container');
+            const uiText = document.getElementById('ui-text');
 
-            // Configuración técnica de cada marcador (escalas originales que tenías)
+            // 2. Definiciones de escala (tus escalas originales exactas)
             const config = {
-                '1': { scale: "0.02988 0.02988 0.02988", name: "Escena 1: Calle Inundada" },
-                '2': { scale: "0.01840 0.01840 0.01840", name: "Escena 2: Desborde Canal" },
-                '3': { scale: "0.03292 0.03292 0.03292", name: "Escena 3: Cárcamo Activo" },
-                '4': { scale: "0.02611 0.02611 0.02611", name: "Escena 4: Riesgo Eléctrico" },
-                '5': { scale: "0.03707 0.03707 0.03707", name: "Escena 5: Ruta de Evacuación" }
+                '1': { scale: "0.02988 0.02988 0.02988", name: "Escenario 1: Calle Inundada" },
+                '2': { scale: "0.01840 0.01840 0.01840", name: "Escenario 2: Desborde Canal" },
+                '3': { scale: "0.03292 0.03292 0.03292", name: "Escenario 3: Cárcamo Activo" },
+                '4': { scale: "0.02611 0.02611 0.02611", name: "Escenario 4: Riesgo Eléctrico" },
+                '5': { scale: "0.03707 0.03707 0.03707", name: "Escenario 5: Ruta de Evacuación" }
             };
 
-            const selected = config[sceneId];
-            uiInfo.innerText = `Buscando marcador de: ${selected.name}`;
+            const selected = config[id];
 
-            // Inyectamos SOLO el marcador solicitado
-            wrapper.innerHTML = `
-                <a-marker id="marker-${sceneId}" type="pattern" url="assets/marker${sceneId}.patt" raycaster="objects: .clickable" emitevents="true" cursor="fuse: false; rayOrigin: mouse;">
-                    <a-entity 
-                        scale="${selected.scale}" 
-                        animation-mixer="loop: repeat" 
-                        gltf-model="#asset-${sceneId}" 
-                        class="clickable" 
-                        gesture-handler>
-                    </a-entity>
-                </a-marker>
-            `;
+            // 3. Inyectar ÚNICAMENTE el marcador solicitado
+            if (selected) {
+                uiText.innerText = `Buscando marcador: ${selected.name}`;
+                
+                container.innerHTML = `
+                    <a-marker 
+                        id="marker-${id}" 
+                        type="pattern" 
+                        url="assets/marker${id}.patt" 
+                        raycaster="objects: .clickable" 
+                        emitevents="true" 
+                        cursor="fuse: false; rayOrigin: mouse;">
+                        
+                        <a-entity 
+                            scale="${selected.scale}" 
+                            animation-mixer="loop: repeat" 
+                            gltf-model="#asset-${id}" 
+                            class="clickable" 
+                            gesture-handler>
+                        </a-entity>
+                    </a-marker>
+                `;
+            } else {
+                uiText.innerText = "Error: Escena no encontrada";
+            }
         </script>
     </body>
 </html>
